@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Karnataka Heritage Atlas – Online</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <style>
+    html, body { height:100%; margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; }
+    #map { width: 100%; height: 100%; }
+    .topbar { position: fixed; z-index: 1000; left: 10px; top: 10px; background: rgba(255,255,255,0.95); padding: 8px 10px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .legend { display:flex; gap:10px; align-items:center; font-size: 13px; }
+    .chip { display:flex; align-items:center; gap:6px; }
+    .swatch { width: 14px; height: 14px; border-radius: 3px; display:inline-block; }
+    .search { margin-top:6px; display:flex; gap:6px; }
+    .search input { padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; }
+    .search button { padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; cursor:pointer; }
+    .leaflet-popup-content { font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="topbar">
+    <div class="legend">
+      <strong>Karnataka Heritage Atlas</strong>
+      <span class="chip"><span class="swatch" style="background:#264653"></span> UNESCO</span>
+      <span class="chip"><span class="swatch" style="background:#2a9d8f"></span> Proposed</span>
+      <span class="chip"><span class="swatch" style="background:#e76f51"></span> Prehistoric / Key Heritage</span>
+    </div>
+    <div class="search">
+      <input id="q" placeholder="Search district or site… e.g., Gadag, Hampi" />
+      <button id="go">Go</button>
+    </div>
+  </div>
+
+<script>
+  const COLORS = { 'UNESCO':'#264653', 'Proposed':'#2a9d8f', 'Prehistoric/Heritage':'#e76f51' };
+  const DISTRICT_THEME = {
+    'Vijayanagara':'UNESCO','Bagalkote':'UNESCO','Hassan':'UNESCO','Mysuru':'UNESCO',
+    'Kodagu':'UNESCO','Chikkamagaluru':'UNESCO','Udupi':'UNESCO',
+    'Koppal':'Proposed','Gadag':'Proposed',
+    'Ballari':'Prehistoric/Heritage','Chitradurga':'Prehistoric/Heritage','Raichur':'Prehistoric/Heritage',
+    'Bidar':'Prehistoric/Heritage','Vijayapura':'Prehistoric/Heritage','Mandya':'Prehistoric/Heritage',
+    'Uttara Kannada':'Prehistoric/Heritage','Belagavi':'Prehistoric/Heritage','Dharwad':'Prehistoric/Heritage',
+    'Bengaluru Urban':'Prehistoric/Heritage','Bengaluru Rural':'Prehistoric/Heritage','Kalaburagi':'Prehistoric/Heritage',
+    'Kolar':'Prehistoric/Heritage','Ramanagara':'Prehistoric/Heritage','Tumakuru':'Prehistoric/Heritage','Shivamogga':'Prehistoric/Heritage',
+    'Dakshina Kannada':'Prehistoric/Heritage','Yadgir':'Prehistoric/Heritage','Davanagere':'Prehistoric/Heritage','Haveri':'Prehistoric/Heritage','Chikkaballapura':'Prehistoric/Heritage'
+  };
+
+  const STORIES = {
+    'Hampi': { district:'Vijayanagara', theme:'UNESCO', title:'Hampi – Vijayanagara Capital' },
+    'Hire Benakal': { district:'Koppal', theme:'Proposed', title:'Hire Benakal – Megalithic Necropolis' },
+    'Lakkundi': { district:'Gadag', theme:'Proposed', title:'Lakkundi – Temple, Basadi & Stepwells' },
+    'Pattadakal': { district:'Bagalkote', theme:'UNESCO', title:'Pattadakal – Early Chalukya' },
+    'Aihole': { district:'Bagalkote', theme:'Prehistoric/Heritage', title:'Aihole – Early Temple Lab' },
+    'Banavasi': { district:'Uttara Kannada', theme:'Prehistoric/Heritage', title:'Banavasi – Kadamba Capital' },
+    'Bidar': { district:'Bidar', theme:'Prehistoric/Heritage', title:'Bidar – Bahmani Capital' },
+    'Vijayapura': { district:'Vijayapura', theme:'Prehistoric/Heritage', title:'Vijayapura – Adil Shahi Core' },
+    'Srirangapatna': { district:'Mandya', theme:'Prehistoric/Heritage', title:'Srirangapatna – Kaveri Island Capital' }
+  };
+
+  const map = L.map('map', { zoomControl:true }).setView([15.5, 75.8], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  fetch('karnataka_districts.geojson')
+    .then(r => r.json())
+    .then(geo => {
+      const layer = L.geoJSON(geo, {
+        style: f => {
+          const name = (f.properties.District || f.properties.district || '').trim();
+          const theme = DISTRICT_THEME[name] || 'Prehistoric/Heritage';
+          return { color:'#475569', weight:1, fillColor: COLORS[theme], fillOpacity:0.85 };
+        },
+        onEachFeature: (f, lyr) => {
+          const name = (f.properties.District || f.properties.district || '').trim();
+          const theme = DISTRICT_THEME[name] || 'Prehistoric/Heritage';
+          let items = Object.entries(STORIES).filter(([k,v]) => v.district === name).map(([k,v]) => `• ${v.title}`);
+          if(items.length === 0) items = ['(No featured stories yet)'];
+          lyr.bindPopup(`<b>${name}</b><br><span style="display:inline-block;padding:2px 6px;border-radius:999px;color:#fff;background:${COLORS[theme]}">${theme}</span><br><br><b>Stories</b><br>${items.join('<br>')}`);
+          lyr.on('click', () => {
+            map.fitBounds(lyr.getBounds(), { padding: [20, 20] });
+            lyr.openPopup();
+          });
+        }
+      }).addTo(map);
+      map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+      window.__districtLayer = layer;
+    });
+
+  // Search
+  const q = document.getElementById('q');
+  document.getElementById('go').onclick = goSearch;
+  q.addEventListener('keydown', e => { if(e.key === 'Enter') goSearch(); });
+
+  function goSearch() {
+    const v = (q.value || '').trim().toLowerCase();
+    if(!v) return;
+
+    // Site match first
+    const site = Object.entries(STORIES).find(([k,vv]) => k.toLowerCase().includes(v));
+    if(site && window.__districtLayer) {
+      const dist = site[1].district;
+      focusDistrict(dist);
+      return;
+    }
+
+    // District match
+    focusDistrict(capitalizeMatch(v));
+  }
+
+  function focusDistrict(name) {
+    if(!name || !window.__districtLayer) return;
+    let found = null;
+    window.__districtLayer.eachLayer(lyr => {
+      const n = (lyr.feature.properties.District || lyr.feature.properties.district || '').trim();
+      if(n.toLowerCase() === name.toLowerCase()) { found = lyr; }
+    });
+    if(found) {
+      map.fitBounds(found.getBounds(), { padding: [20,20] });
+      found.openPopup();
+    } else {
+      alert('No match found.');
+    }
+  }
+
+  function capitalizeMatch(s) {
+    // Try to map common lowercase to proper case names
+    const keys = Object.keys(DISTRICT_THEME);
+    const k = keys.find(n => n.toLowerCase().includes(s));
+    return k || s;
+  }
+</script>
+</body>
+</html>
