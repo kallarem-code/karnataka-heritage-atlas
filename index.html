@@ -127,6 +127,7 @@
         <h1 id="headline">What if Karnataka’s ancient stones could speak?</h1>
         <p class="sub" id="sub">An interactive demo connecting UNESCO marvels, proposed nominations, and six timeless sites—from Banavasi to Bidar—into a single story-ready canvas.</p>
         <div class="hero-actions">
+          <a class="btn" onclick="playTour('unesco')">Play UNESCO Tour</a>
           <a class="btn primary" href="#categories" id="ctaStart">Start the Journey</a>
           <a class="btn" href="#vision" id="ctaWhy">Why it matters</a>
         </div>
@@ -320,6 +321,191 @@ function addMarker(k, s){
   const m = L.marker(s.ll);
   m.on('click', ()=> openSite(k));
   m.bindTooltip(s.title[LANG] || s.title.en);
+  <script>
+// ===== FILTERS + SEARCH =====
+const filterState = { cat: new Set(), eras: new Set(), q: '' };
+
+// Build era chips from your existing `periods` array
+document.getElementById('eraChips').innerHTML =
+  periods.map(e=>`<button class="chip era" data-era="${e}">${e}</button>`).join('');
+
+// Category chips
+document.querySelectorAll('[data-filter-cat]').forEach(b => {
+  b.addEventListener('click', () => {
+    const key = b.getAttribute('data-filter-cat');
+    if (filterState.cat.has(key)) { filterState.cat.delete(key); b.classList.remove('active'); }
+    else { filterState.cat.add(key); b.classList.add('active'); }
+    applyFilters();
+  });
+});
+
+// Era chips
+document.querySelectorAll('.chip.era').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const e = b.dataset.era;
+    if (filterState.eras.has(e)) { filterState.eras.delete(e); b.classList.remove('active'); }
+    else { filterState.eras.add(e); b.classList.add('active'); }
+    applyFilters();
+  });
+});
+
+// Search
+document.getElementById('q').addEventListener('input', (e)=>{
+  filterState.q = e.target.value.toLowerCase();
+  applyFilters();
+});
+
+// Clear all
+document.getElementById('clearAll').addEventListener('click', ()=>{
+  filterState.cat.clear();
+  filterState.eras.clear();
+  filterState.q = '';
+  document.querySelectorAll('[data-filter-cat], .chip.era').forEach(n=> n.classList.remove('active'));
+  document.getElementById('q').value = '';
+  applyFilters();
+});
+
+// Helper
+function passes(s){
+  const catOK = !filterState.cat.size || filterState.cat.has(getPrimaryCat(s));
+  const eraOK = !filterState.eras.size || s.periods.some(p => filterState.eras.has(p));
+  const q = filterState.q;
+  const qOK = !q || ((s.title?.en||'').toLowerCase().includes(q) || (s.intro?.en||'').toLowerCase().includes(q));
+  return catOK && eraOK && qOK;
+}
+
+// Apply: hide/show chips and rebuild cluster
+function applyFilters(){
+  // Chips in category cards
+  document.querySelectorAll('.chip[data-key]').forEach(ch=>{
+    const s = sites[ch.dataset.key];
+    ch.style.display = passes(s) ? '' : 'none';
+  });
+
+  // Map cluster
+  cluster.clearLayers();
+  for (const [k, s] of Object.entries(sites)){
+    if (passes(s) && markers[k]) cluster.addLayer(markers[k]);
+  }
+
+  // URL state
+  const params = new URLSearchParams(location.search);
+  params.set('lang', LANG);
+  filterState.cat.size ? params.set('cat', Array.from(filterState.cat).join(',')) : params.delete('cat');
+  filterState.eras.size ? params.set('era', Array.from(filterState.eras).join(',')) : params.delete('era');
+  filterState.q ? params.set('q', filterState.q) : params.delete('q');
+  history.replaceState(null, '', location.pathname + '?' + params.toString() + location.hash);
+}
+
+// Initialize from URL (shareable views)
+(function initFromUrl(){
+  const u = new URL(location.href);
+  const cats = (u.searchParams.get('cat')||'').split(',').filter(Boolean);
+  const eras = (u.searchParams.get('era')||'').split(',').filter(Boolean);
+  const q = u.searchParams.get('q')||'';
+  cats.forEach(c => { const btn = document.querySelector(`[data-filter-cat="${c}"]`); if(btn){ filterState.cat.add(c); btn.classList.add('active'); } });
+  eras.forEach(e => { const btn = document.querySelector(`.chip.era[data-era="${e}"]`); if(btn){ filterState.eras.add(e); btn.classList.add('active'); } });
+  if(q){ filterState.q = q.toLowerCase(); const iq=document.getElementById('q'); iq.value = q; }
+  applyFilters();
+})();
+  <script>
+// ===== AUTOPLAY TOUR =====
+const tours = {
+  unesco: [
+    { key:'hampi',         zoom:7.3, delay:1500 },
+    { key:'pattadakal',    zoom:7.7, delay:1500 },
+    { key:'western_ghats', zoom:6.6, delay:1600 }
+  ]
+};
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+async function playTour(id){
+  const steps = tours[id]; if(!steps) return;
+  // ensure filters won't hide steps during tour
+  const clearBtn = document.getElementById('clearAll');
+  if (clearBtn) clearBtn.click();
+
+  for (const step of steps){
+    const s = sites[step.key]; if(!s) continue;
+    map.flyTo(s.ll, step.zoom, { duration: 1.2, easeLinearity: 0.25 });
+    await sleep(800);
+    openSite(step.key);
+    await sleep(step.delay);
+  }
+}
+</script>
+
+</script>
+
+  // Helper: does a site pass current filters?
+function passes(s){
+  const catOK = !filterState.cat.size || filterState.cat.has(getPrimaryCat(s));
+  const eraOK = !filterState.eras.size || s.periods.some(p => filterState.eras.has(p));
+  const q = filterState.q;
+  const qOK = !q || ((s.title?.en||'').toLowerCase().includes(q) || (s.intro?.en||'').toLowerCase().includes(q));
+  return catOK && eraOK && qOK;
+}
+
+// Apply filters: hide/show chips + rebuild marker cluster + push URL state
+function applyFilters(){
+  // Chips in the three category cards
+  document.querySelectorAll('.chip[data-key]').forEach(ch=>{
+    const s = sites[ch.dataset.key];
+    ch.style.display = passes(s) ? '' : 'none';
+  });
+
+  // Map cluster
+  cluster.clearLayers();
+  for (const [k, s] of Object.entries(sites)){
+    if (passes(s) && markers[k]) cluster.addLayer(markers[k]);
+  }
+
+  // URL state (shareable)
+  const params = new URLSearchParams(location.search);
+  params.set('lang', LANG);
+  filterState.cat.size ? params.set('cat', Array.from(filterState.cat).join(',')) : params.delete('cat');
+  filterState.eras.size ? params.set('era', Array.from(filterState.eras).join(',')) : params.delete('era');
+  filterState.q ? params.set('q', filterState.q) : params.delete('q');
+  history.replaceState(null, '', location.pathname + '?' + params.toString() + location.hash);
+}
+
+// Initialize from URL on load
+(function initFromUrl(){
+  const u = new URL(location.href);
+  const cats = (u.searchParams.get('cat')||'').split(',').filter(Boolean);
+  const eras = (u.searchParams.get('era')||'').split(',').filter(Boolean);
+  const q = u.searchParams.get('q')||'';
+  cats.forEach(c => { const btn = document.querySelector(`[data-filter-cat="${c}"]`); if(btn){ filterState.cat.add(c); btn.classList.add('active'); } });
+  eras.forEach(e => { const btn = document.querySelector(`.chip.era[data-era="${e}"]`); if(btn){ filterState.eras.add(e); btn.classList.add('active'); } });
+  if(q){ filterState.q = q.toLowerCase(); const iq=document.getElementById('q'); iq.value = q; }
+  applyFilters();
+})();
+
+  // ===== AUTOPLAY TOUR =====
+const tours = {
+  unesco: [
+    { key:'hampi',         zoom:7.3, delay:1500 },
+    { key:'pattadakal',    zoom:7.7, delay:1500 },
+    { key:'western_ghats', zoom:6.6, delay:1600 }
+  ]
+};
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+async function playTour(id){
+  const steps = tours[id]; if(!steps) return;
+  // clear filters so nothing is hidden during the tour
+  const clearBtn = document.getElementById('clearAll');
+  if (clearBtn) clearBtn.click();
+
+  for (const step of steps){
+    const s = sites[step.key]; if(!s) continue;
+    map.flyTo(s.ll, step.zoom, { duration: 1.2, easeLinearity: 0.25 });
+    await sleep(800);
+    openSite(step.key);
+    await sleep(step.delay);
+  }
+}
+
   markers[k] = m;
   cluster.addLayer(m);
 }
@@ -327,6 +513,7 @@ function addMarker(k, s){
 // (re)populate markers initially
 cluster.clearLayers();
 Object.entries(sites).forEach(([k,s])=> addMarker(k,s));
+    
 </script>
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OSM' }).addTo(map);
 
