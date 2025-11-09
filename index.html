@@ -245,7 +245,6 @@
     </div>
   </dialog>
 
-  <script>
     const i18n = {
       en:{ brand:"From Stone to Story", demo:"Demo", kicker:"Karnataka’s Living Heritage", headline:"What if Karnataka’s ancient stones could speak?", sub:"An interactive demo connecting UNESCO marvels, proposed nominations, and six timeless sites—from Banavasi to Bidar—into a single story-ready canvas.", explore:"Explore", vision:"Vision", start:"Start the Journey", why:"Why it matters", gatewayTitle:"Three Gateways · Multiple Touchpoints", gatewayHint:"Click a site chip to open details", unescoH:"UNESCO World Heritage", unescoP:"Global treasures that anchor Karnataka on the world map.", propH:"Proposed UNESCO Sites", propP:"Sites with compelling Outstanding Universal Value.", sixH:"Six Prehistoric & Heritage Sites", sixP:"Living traditions beyond the textbook routes.", visionH:"Vision", visionP:"Scale this demo into a statewide digital atlas: immersive stories, QR-enabled trails, school-ready modules, and circuits that connect monuments with crafts, festivals, cuisine and communities.", close:"Close", open:"Open Deep Link", add:"Add to Circuit" },
       kn:{ brand:"ಕಲ್ಲಿನಿಂದ ಕಥೆಗೆ", demo:"ಡೆಮೋ", kicker:"ಕರ್ನಾಟಕದ ಜೀವಂತ ಪರಂಪರೆ", headline:"ಕರ್ನಾಟಕದ ಪುರಾತನ ಕಲ್ಲುಗಳು ಮಾತಾಡಿದರೆ?", sub:"ಯುನೆಸ್ಕೊ ಪರಂಪರೆ, ಪ್ರಸ್ತಾವಿತ ಸೈಟ್‌ಗಳು ಮತ್ತು ಆರು ಅಮರವಂತ ಸ್ಥಳಗಳ ಕಥೆಗಳನ್ನು ಒಂದು ಪರದೆಗೆ ತರುತ್ತಿರುವ ಸಂವಹನಾತ್ಮಕ ಡೆಮೋ.", explore:"ಅನ್ವೇಷಿಸಿ", vision:"ದೃಷ್ಟಿ", start:"ಯಾತ್ರೆ ಆರಂಭಿಸಿ", why:"ಏಕೆ ಮುಖ್ಯ?", gatewayTitle:"ಮೂರು ದ್ವಾರಗಳು · ಅನೇಕ ಸ್ಪರ್ಶ ಬಿಂದುಗಳು", gatewayHint:"ವಿವರ ತೆರೆಯಲು ಸ್ಥಳದ ಚಿಪ್ ಕ್ಲಿಕ್ ಮಾಡಿ", unescoH:"ಯುನೆಸ್ಕೊ ವಿಶ್ವ ಪರಂಪರೆ", unescoP:"ವಿಶ್ವ ನಕ್ಷೆಯಲ್ಲಿ ಕರ್ನಾಟಕವನ್ನು ನಿಲ್ಲಿಸುವ ಕಲೆಮಾತುಗಳು.", propH:"ಪ್ರಸ್ತಾವಿತ ಯುನೆಸ್ಕೊ ಸೈಟ್‌ಗಳು", propP:"ಅಸಾಮಾನ್ಯ ವಿಶ್ವಮಟ್ಟದ ಮೌಲ್ಯ ಹೊಂದಿರುವ ಸ್ಥಳಗಳು.", sixH:"ಆರು ಪುರಾತನ/ಪಾರಂಪರಿಕ ಸ್ಥಳಗಳು", sixP:"ಪಠ್ಯಪುಸ್ತಕ ಮಾರ್ಗಗಳಾಚೆಗೆ ಜೀವಂತ ಪರಂಪರೆ.", visionH:"ದೃಷ್ಟಿ", visionP:"ಈ ಡೆಮೋವನ್ನು ರಾಜ್ಯವ್ಯಾಪಿ ಡಿಜಿಟಲ್ ಅಟ್ಲಸ್ ಆಗಿ ವಿಸ್ತರಿಸಿ: QR ಮಾರ್ಗಗಳು, ಶಾಲಾ ಮಾಡ್ಯೂಲ್‌ಗಳು, ಉದ್ಯಮ-ಸಂಸ್ಕೃತಿ ಸಂಪರ್ಕಗಳು.", close:"ಮುಚ್ಚಿ", open:"ಡೀಪ್ ಲಿಂಕ್ ತೆರೆಯಿರಿ", add:"ಸರ್ಕ್ಯೂಟಿಗೆ ಸೇರಿಸಿ" }
@@ -305,7 +304,6 @@
     }
 
     const map = L.map('map', {zoomControl:true}).setView([14.5, 75.5], 6.6);
-    <script>
 // ===== CLUSTER + MARKERS =====
 const markers = {}; // key -> marker
 const cluster = L.markerClusterGroup({
@@ -417,7 +415,6 @@ function applyFilters(){
   if(q){ filterState.q = q.toLowerCase(); const iq=document.getElementById('q'); iq.value = q; }
   applyFilters();
 })();
-  <script>
 // ===== AUTOPLAY TOUR =====
 const tours = {
   unesco: [
