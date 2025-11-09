@@ -315,7 +315,13 @@ const cluster = L.markerClusterGroup({
 });
 map.addLayer(cluster);
 
-function getPrimaryCat(s){ return (s.cat || '').toLowerCase().split('/')[0]; }
+function getPrimaryCat(s){
+  const c = (s.cat || '').toLowerCase();
+  if (c.startsWith('unesco')) return 'unesco';       // "unesco" or "unesco-natural"
+  if (c.startsWith('proposed')) return 'proposed';   // "proposed" or "proposed/..."
+  if (c.includes('six')) return 'six';               // ".../six" or "six"
+  return c.split('/')[0];
+}
 
 function addMarker(k, s){
   const m = L.marker(s.ll);
@@ -336,6 +342,10 @@ document.querySelectorAll('[data-filter-cat]').forEach(b => {
     if (filterState.cat.has(key)) { filterState.cat.delete(key); b.classList.remove('active'); }
     else { filterState.cat.add(key); b.classList.add('active'); }
     applyFilters();
+    document.querySelectorAll('.chip[data-key]').forEach(ch=>{
+  const s = sites[ch.dataset.key];
+  ch.style.display = passes(s) ? '' : 'none';
+});
   });
 });
 
