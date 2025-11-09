@@ -448,7 +448,6 @@ async function playTour(id){
 cluster.clearLayers();
 Object.entries(sites).forEach(([k,s])=> addMarker(k,s));
     
-</script>
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OSM' }).addTo(map);
 
     function addMarker(k, s){
