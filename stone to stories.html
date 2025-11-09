@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>From Stone to Story — Karnataka’s Living Heritage (Demo+)</title>
+  <!-- Leaflet map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- QR code helper -->
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+  <style>
+    :root { --bg:#0b1020; --fg:#f6f7fb; --muted:#b7c4d6; --accent:#5be3c1; --accent2:#7aa8ff; --card:#121935; --chip:#1a2246; --chip-h:#243061; --ring:#79ffd7; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 600px at 10% 10%,#121a38,transparent),radial-gradient(1000px 500px at 90% 10%,#0f1b2f,transparent),radial-gradient(900px 600px at 50% 90%,#0c1330,transparent),var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    a{color:inherit}
+    .container{max-width:1240px;margin:0 auto;padding:0 20px}
+    header{position:fixed;top:0;left:0;right:0;z-index:30;background:linear-gradient(to bottom,rgba(11,16,32,.9),rgba(11,16,32,.6),transparent);backdrop-filter:saturate(160%) blur(10px)}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:.6rem;align-items:center;font-weight:700;letter-spacing:.3px}
+    .brand .logo{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:conic-gradient(from 90deg, var(--accent), var(--accent2));box-shadow:0 0 0 2px #0b1020, 0 0 24px rgba(91,227,193,.35)}
+    .brand small{color:var(--muted);font-weight:500}
+    .cta{display:flex;gap:.5rem;align-items:center}
+    .btn{border:1px solid rgba(255,255,255,.14);padding:.55rem .9rem;border-radius:999px;background:rgba(255,255,255,.06);color:var(--fg);text-decoration:none;cursor:pointer}
+    .btn:hover{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.12)}
+    .lang{cursor:pointer}
+
+    /* Layout with sticky map */
+    main{padding-top:72px}
+    .grid{display:grid;grid-template-columns:2fr 1.1fr;gap:22px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .sticky{position:sticky;top:88px;height:calc(100vh - 120px)}
+
+    /* Hero */
+    .hero{position:relative;min-height:64vh;display:grid;place-items:center;overflow:hidden}
+    .stars,.shoot{position:absolute;inset:0;pointer-events:none}
+    .stars{background:radial-gradient(2px 2px at 20% 30%,#fff4,transparent),radial-gradient(2px 2px at 80% 20%,#fff4,transparent),radial-gradient(1px 1px at 60% 70%,#fff5,transparent)}
+    .shoot{background:repeating-linear-gradient(90deg, transparent 0 98%, #ffffff12 99% 100%);mask-image:linear-gradient(to right, transparent, black 20%, black 80%, transparent);animation:slide 14s linear infinite}
+    @keyframes slide{to{transform:translateX(-100%)}}
+    .hero-inner{display:grid;gap:1rem;text-align:center;padding:32px 0}
+    .kicker{color:var(--accent);font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    h1{margin:0;font-size:clamp(2rem, 4vw + 1rem, 4rem);line-height:1.1}
+    .sub{color:var(--muted);font-size:clamp(1rem, .6vw + .9rem, 1.2rem)}
+    .hero-actions{display:flex;gap:.8rem;justify-content:center;margin-top:.6rem}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0b1020;border:none;font-weight:700;box-shadow:0 8px 26px rgba(121,255,215,.25)}
+
+    /* Sections */
+    section{padding:32px 0}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin-bottom:14px}
+    .section-head h2{margin:0;font-size:1.4rem}
+    .cards{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px}
+    @media (max-width:980px){.cards{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg, #16214a 0%, #10183a 100%);border:1px solid #2a3766;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 30px rgba(10,20,45,.25)}
+    .card h3{margin:.2rem 0}
+    .chiprow{display:flex;flex-wrap:wrap;gap:.5rem}
+    .chip{background:var(--chip);border:1px solid #2d3a6a;border-radius:999px;padding:.35rem .7rem;font-size:.92rem;cursor:pointer}
+    .chip:hover{background:var(--chip-h);border-color:#3a4c88}
+    .tiny{color:var(--muted);font-size:.92rem}
+
+    /* Timeline */
+    .timeline{display:flex;gap:10px;overflow:auto;padding:10px;border:1px solid #2a3766;border-radius:14px;background:#0e1736}
+    .tick{flex:0 0 auto;padding:.45rem .7rem;border-radius:999px;border:1px solid #335;cursor:pointer}
+    .tick.active{border-color:var(--ring);box-shadow:0 0 0 2px #0b1020,0 0 0 4px var(--ring)}
+
+    /* Map */
+    #map{width:100%;height:100%;border:1px solid #2a3766;border-radius:16px;box-shadow:0 12px 30px rgba(10,20,45,.25)}
+
+    /* Modal */
+    dialog{border:none;border-radius:20px;padding:0;max-width:760px;width:92vw;background:#0f1736;color:#f6f7fb;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+    .modal{display:grid;grid-template-columns:1.2fr 1fr}
+    @media (max-width:760px){.modal{grid-template-columns:1fr}}
+    .modal .media{min-height:220px;background:linear-gradient(135deg,#1e2a5e,#0f1736);display:grid;place-items:center;border-top-left-radius:20px;border-bottom-left-radius:20px}
+    .modal .body{padding:18px}
+    .modal h4{margin:0 0 .25rem 0;font-size:1.4rem}
+    .pill{display:inline-block;border-radius:999px;padding:.25rem .6rem;border:1px solid #3550a8;background:#152254;font-size:.8rem;color:#b6c6ff}
+    .wow{margin-top:.6rem;padding:.6rem .7rem;border:1px dashed #2f4db3;border-radius:12px;background:#0e1a41}
+    .actions{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+    .ghost{background:transparent;border:1px solid #2e3f77;color:#cdd7ff;border-radius:10px;padding:.55rem .75rem;cursor:pointer}
+    .solid{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#0b1020;border-radius:10px;padding:.55rem .9rem;cursor:pointer;font-weight:700}
+
+    footer{padding:32px 0;color:#95a6c6;border-top:1px solid #23305d;margin-top:24px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand"><span class="logo">⛯</span> <span id="brandText">From Stone to Story</span> <small id="brandSmall">Demo</small></div>
+      <nav class="cta">
+        <button class="btn lang" id="langToggle">EN / KN</button>
+        <a class="btn" href="#categories" id="navExplore">Explore</a>
+        <a class="btn" href="#vision" id="navVision">Vision</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero" id="top">
+      <div class="stars"></div>
+      <div class="shoot"></div>
+      <div class="hero-inner">
+        <div class="kicker" id="kicker">Karnataka’s Living Heritage</div>
+        <h1 id="headline">What if Karnataka’s ancient stones could speak?</h1>
+        <p class="sub" id="sub">An interactive demo connecting UNESCO marvels, proposed nominations, and six timeless sites—from Banavasi to Bidar—into a single story-ready canvas.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#categories" id="ctaStart">Start the Journey</a>
+          <a class="btn" href="#vision" id="ctaWhy">Why it matters</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <div>
+        <section id="categories">
+          <div class="section-head">
+            <h2 id="gatewayTitle">Three Gateways · Multiple Touchpoints</h2>
+            <span class="tiny" id="gatewayHint">Click a site chip to open details</span>
+          </div>
+          <div class="timeline" id="timeline"></div>
+          <div class="cards" style="margin-top:14px">
+            <article class="card">
+              <h3 id="unescoH">UNESCO World Heritage</h3>
+              <p class="tiny" id="unescoP">Global treasures that anchor Karnataka on the world map.</p>
+              <div class="chiprow">
+                <button class="chip" data-key="hampi">Hampi</button>
+                <button class="chip" data-key="pattadakal">Pattadakal</button>
+                <button class="chip" data-key="western_ghats">Western Ghats (KA)</button>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3 id="propH">Proposed UNESCO Sites</h3>
+              <p class="tiny" id="propP">Sites with compelling Outstanding Universal Value.</p>
+              <div class="chiprow">
+                <button class="chip" data-key="belur">Belur</button>
+                <button class="chip" data-key="halebidu">Halebidu</button>
+                <button class="chip" data-key="somanathapura">Somanathapura</button>
+                <button class="chip" data-key="badami">Badami</button>
+                <button class="chip" data-key="aihole">Aihole</button>
+                <button class="chip" data-key="bidar">Bidar</button>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3 id="sixH">Six Prehistoric & Heritage Sites</h3>
+              <p class="tiny" id="sixP">Living traditions beyond the textbook routes.</p>
+              <div class="chiprow">
+                <button class="chip" data-key="banavasi">Banavasi</button>
+                <button class="chip" data-key="mirjan">Mirjan Fort</button>
+                <button class="chip" data-key="balligave">Balligave</button>
+                <button class="chip" data-key="brahmagiri">Brahmagiri</button>
+                <button class="chip" data-key="kurudumale">Kurudumale</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="vision">
+          <div class="section-head"><h2 id="visionH">Vision</h2></div>
+          <p class="tiny" id="visionP">Scale this demo into a statewide digital atlas: immersive stories, QR-enabled trails, school-ready modules, and circuits that connect monuments with crafts, festivals, cuisine and communities.</p>
+        </section>
+
+        <footer>
+          © From Stone to Story • Demo. For presentation only. Replace with verified content during production.
+        </footer>
+      </div>
+
+      <aside class="sticky">
+        <div id="map" aria-label="Karnataka Heritage Map"></div>
+        <div style="margin-top:12px;display:grid;gap:8px">
+          <button class="btn" id="viewItinerary">View Itinerary (<span id="circuitCount">0</span>)</button>
+          <button class="btn" id="clearItinerary">Clear Itinerary</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Modal: Site Detail -->
+  <dialog id="siteModal">
+    <div class="modal">
+      <div class="media" id="modalMedia"><img id="modalImg" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-top-left-radius:20px;border-bottom-left-radius:20px"/></div>
+      <div class="body">
+        <div class="pill" id="modalCategory">Category</div>
+        <h4 id="modalTitle">Title</h4>
+        <p id="modalIntro" class="tiny"></p>
+        <div class="wow" id="modalWow"></div>
+        <canvas id="qr" style="margin-top:10px;border-radius:10px;background:#0b1536"></canvas>
+        <div class="actions">
+          <button class="ghost" onclick="window.siteModal.close()" id="btnClose">Close</button>
+          <a class="solid" id="deepLink" href="#" target="_blank" rel="noopener">Open Deep Link</a>
+          <button class="ghost" id="addCircuit">Add to Circuit</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modal: Itinerary -->
+  <dialog id="planModal">
+    <div class="modal" style="grid-template-columns:1fr 1.2fr">
+      <div class="body" style="border-right:1px solid #223264">
+        <div class="pill">Itinerary Builder</div>
+        <h4 id="planTitle">Your Circuit</h4>
+        <ol id="planList" class="tiny" style="margin:0;padding-left:1.2rem"></ol>
+        <div class="actions">
+          <button class="ghost" id="planUp">Move Up</button>
+          <button class="ghost" id="planDown">Move Down</button>
+          <button class="ghost" id="planRemove">Remove</button>
+          <button class="ghost" id="planClear">Clear</button>
+        </div>
+      </div>
+      <div class="body">
+        <div class="pill">Distance Estimate</div>
+        <div id="distWrap" class="tiny" style="line-height:1.8;margin-top:.4rem"></div>
+        <div class="actions">
+          <button class="solid" id="exportJSON">Export .json</button>
+          <button class="ghost" id="printPlan">Print / Save PDF</button>
+          <button class="ghost" onclick="window.planModal.close()">Close</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    const i18n = {
+      en:{ brand:"From Stone to Story", demo:"Demo", kicker:"Karnataka’s Living Heritage", headline:"What if Karnataka’s ancient stones could speak?", sub:"An interactive demo connecting UNESCO marvels, proposed nominations, and six timeless sites—from Banavasi to Bidar—into a single story-ready canvas.", explore:"Explore", vision:"Vision", start:"Start the Journey", why:"Why it matters", gatewayTitle:"Three Gateways · Multiple Touchpoints", gatewayHint:"Click a site chip to open details", unescoH:"UNESCO World Heritage", unescoP:"Global treasures that anchor Karnataka on the world map.", propH:"Proposed UNESCO Sites", propP:"Sites with compelling Outstanding Universal Value.", sixH:"Six Prehistoric & Heritage Sites", sixP:"Living traditions beyond the textbook routes.", visionH:"Vision", visionP:"Scale this demo into a statewide digital atlas: immersive stories, QR-enabled trails, school-ready modules, and circuits that connect monuments with crafts, festivals, cuisine and communities.", close:"Close", open:"Open Deep Link", add:"Add to Circuit" },
+      kn:{ brand:"ಕಲ್ಲಿನಿಂದ ಕಥೆಗೆ", demo:"ಡೆಮೋ", kicker:"ಕರ್ನಾಟಕದ ಜೀವಂತ ಪರಂಪರೆ", headline:"ಕರ್ನಾಟಕದ ಪುರಾತನ ಕಲ್ಲುಗಳು ಮಾತಾಡಿದರೆ?", sub:"ಯುನೆಸ್ಕೊ ಪರಂಪರೆ, ಪ್ರಸ್ತಾವಿತ ಸೈಟ್‌ಗಳು ಮತ್ತು ಆರು ಅಮರವಂತ ಸ್ಥಳಗಳ ಕಥೆಗಳನ್ನು ಒಂದು ಪರದೆಗೆ ತರುತ್ತಿರುವ ಸಂವಹನಾತ್ಮಕ ಡೆಮೋ.", explore:"ಅನ್ವೇಷಿಸಿ", vision:"ದೃಷ್ಟಿ", start:"ಯಾತ್ರೆ ಆರಂಭಿಸಿ", why:"ಏಕೆ ಮುಖ್ಯ?", gatewayTitle:"ಮೂರು ದ್ವಾರಗಳು · ಅನೇಕ ಸ್ಪರ್ಶ ಬಿಂದುಗಳು", gatewayHint:"ವಿವರ ತೆರೆಯಲು ಸ್ಥಳದ ಚಿಪ್ ಕ್ಲಿಕ್ ಮಾಡಿ", unescoH:"ಯುನೆಸ್ಕೊ ವಿಶ್ವ ಪರಂಪರೆ", unescoP:"ವಿಶ್ವ ನಕ್ಷೆಯಲ್ಲಿ ಕರ್ನಾಟಕವನ್ನು ನಿಲ್ಲಿಸುವ ಕಲೆಮಾತುಗಳು.", propH:"ಪ್ರಸ್ತಾವಿತ ಯುನೆಸ್ಕೊ ಸೈಟ್‌ಗಳು", propP:"ಅಸಾಮಾನ್ಯ ವಿಶ್ವಮಟ್ಟದ ಮೌಲ್ಯ ಹೊಂದಿರುವ ಸ್ಥಳಗಳು.", sixH:"ಆರು ಪುರಾತನ/ಪಾರಂಪರಿಕ ಸ್ಥಳಗಳು", sixP:"ಪಠ್ಯಪುಸ್ತಕ ಮಾರ್ಗಗಳಾಚೆಗೆ ಜೀವಂತ ಪರಂಪರೆ.", visionH:"ದೃಷ್ಟಿ", visionP:"ಈ ಡೆಮೋವನ್ನು ರಾಜ್ಯವ್ಯಾಪಿ ಡಿಜಿಟಲ್ ಅಟ್ಲಸ್ ಆಗಿ ವಿಸ್ತರಿಸಿ: QR ಮಾರ್ಗಗಳು, ಶಾಲಾ ಮಾಡ್ಯೂಲ್‌ಗಳು, ಉದ್ಯಮ-ಸಂಸ್ಕೃತಿ ಸಂಪರ್ಕಗಳು.", close:"ಮುಚ್ಚಿ", open:"ಡೀಪ್ ಲಿಂಕ್ ತೆರೆಯಿರಿ", add:"ಸರ್ಕ್ಯೂಟಿಗೆ ಸೇರಿಸಿ" }
+    };
+
+    const sites = {
+      hampi:{title:{en:"Hampi — Vijayanagara’s open‑air museum",kn:"ಹಂಪಿ — ವಿಜಯನಗರದ ಮುಕ್ತಾಲಯ"},cat:"UNESCO",intro:{en:"Granite boulders, royal enclosures and markets once buzzing with global trade.",kn:"ಗ್ರಾನೈಟ್ ಗುಡ್ಡಗಳು, ಅರಮನೆ ವಲಯಗಳು ಮತ್ತು ಜಾಗತಿಕ ವ್ಯಾಪಾರದಿಂದ ಕೂಗಿದ ಮಾರುಕಟ್ಟೆಗಳು."},wow:{en:"At its peak, Hampi was among the world’s richest cities; 1,600+ protected monuments.",kn:"ಅತ್ಯುನ್ನತದಲ್ಲಿ ಹಂಪಿ ವಿಶ್ವದಲ್ಲಿಯೇ ಶ್ರೀಮಂತ ನಗರಗಳಲ್ಲಿ ಒಂದಾಗಿತ್ತು; 1,600+ ಸಂರಕ್ಷಿತ ಸ್ಮಾರಕಗಳು."}, emoji:"🏯", ll:[15.335,76.462], periods:["Vijayanagara"], img:null},
+      pattadakal:{title:{en:"Pattadakal — A school of temples",kn:"ಪಟ್ಟದಕಲ್ಲು — ದೇವಾಲಯಗಳ ಪಾಠಶಾಲೆ"},cat:"UNESCO",intro:{en:"A living gallery where northern and southern styles meet.",kn:"ಉತ್ತರ-ದಕ್ಷಿಣ ಶೈಲಿಗಳು ಸೇರುವ ಜೀವಂತ ಗ್ಯಾಲರಿ."},wow:{en:"Nine major temples fuse Nagara & Dravida in one complex.",kn:"ಒಂದೇ ಸಮುಚ್ಚಯದಲ್ಲಿ ನಾಗರ ಮತ್ತು ದ್ರಾವಿಡ ಶೈಲಿಗಳ ಸಂಯೋಜನೆ."}, emoji:"🛕", ll:[15.947,75.815], periods:["Early Chalukya"], img:null},
+      western_ghats:{title:{en:"Western Ghats (Karnataka)",kn:"ಪಶ್ಚಿಮ ಘಟ್ಟ (ಕರ್ನಾಟಕ)"},cat:"UNESCO-Natural",intro:{en:"Mist forests, sacred groves and biodiversity corridors.",kn:"ಮಂಜು ಕಾಡುಗಳು, ದೇವರ ಕಾಡುಗಳು ಮತ್ತು ಜೈವಿಕ ವೈವಿಧ್ಯ ಮಾರ್ಗಗಳು."},wow:{en:"One of the world’s biodiversity hotspots with high endemism.",kn:"ವಿಶ್ವದ ಪ್ರಮುಖ ಜೈವ ವೈವಿಧ್ಯ ಹಾಟ್‌ಸ್ಪಾಟ್‌ಗಳಲ್ಲಿ ಒಂದು."}, emoji:"🌿", ll:[13.5,75.0], periods:["Natural"], img:null},
+
+      belur:{title:{en:"Belur — Hoysala artistry in soapstone",kn:"ಬೆಳೂರು — ಹೊಯ್ಸಳರ ಸೋಪ್‌ಸ್ಟೋನ್ ಕಲಾ"},cat:"Proposed",intro:{en:"Stories carved in stone: dancers, epics, daily life.",kn:"ಕಲ್ಲಿನಲ್ಲಿ ಕೆತ್ತಿದ ಕಥೆಗಳು: ನೃತ್ಯ, ಪುರಾಣ, ದಿನಜೀವನ."},wow:{en:"Star‑plan shrines with lace‑like detailing.",kn:"ನಕ್ಷತ್ರ ಯೋಜನೆಯ ದೇವಾಲಯಗಳು — ಲೇಸ್‌ನಂತಹ ವಿವರಗಳು."}, emoji:"🗿", ll:[13.165,75.865], periods:["Hoysala"], img:null},
+      halebidu:{title:{en:"Halebidu — The jewel of the Hoysalas",kn:"ಹಳೆಬೀಡು — ಹೊಯ್ಸಳರ ಮಣಿ"},cat:"Proposed",intro:{en:"Mythic friezes unfurl like graphic novels.",kn:"ಪೌರಾಣಿಕ ಫ್ರೀಜ್‌ಗಳು ಗ್ರಾಫಿಕ್ ಕಾದಂಬರಿಯಂತೆ ಹರಡುತ್ತವೆ."},wow:{en:"Continuous narrative bands wrap the base for hundreds of feet.",kn:"ನೂರಾರು ಅಡಿ ವಿಸ್ತಾರದಲ್ಲಿ ನಿರಂತರ ಕಥಾಬ್ಯಾಂಡ್‌ಗಳು."}, emoji:"💎", ll:[13.208,75.99], periods:["Hoysala"], img:null},
+      somanathapura:{title:{en:"Somanathapura — Kesava temple",kn:"ಸೋಮನಾಥಪುರ — ಕೇಶವ ದೇವಸ್ಥಾನ"},cat:"Proposed",intro:{en:"Perfect geometry meets lyrical sculpture.",kn:"ಸೂಕ್ಷ್ಮ ಜ್ಯಾಮಿತಿ ಮತ್ತು ಸಂಗೀತಾತ್ಮಕ ಶಿಲ್ಪ."},wow:{en:"Exemplar of stellate Hoysala plan.",kn:"ಸ್ಟೆಲ್ಲೇಟ್ ಹೊಯ್ಸಳ ಯೋಜನೆಯ ಅತ್ಯುತ್ತಮ ಉದಾಹರಣೆ."}, emoji:"📐", ll:[12.201,76.654], periods:["Hoysala"], img:null},
+      badami:{title:{en:"Badami — Sandstone caves & royal memories",kn:"ಬಾದಾಮಿ — ಮರಳುಗಲ್ಲಿನ ಗುಹೆಗಳು"},cat:"Proposed",intro:{en:"Rock‑cut sanctuaries over an ancient tank.",kn:"ಪ್ರಾಚೀನ ಕೆರೆಯ ಮೇಲೆ ಕಲ್ಲು ಕತ್ತರಿಸಿದ ಗುಹಗಳು."},wow:{en:"Early Chalukya cave art with inscriptions.",kn:"ಆದಿಕಾಲದ ಚಾಲುಕ್ಯ ಗುಹಾಶಿಲ್ಪ ಮತ್ತು ಶಾಸನಗಳು."}, emoji:"🕳️", ll:[15.918,75.676], periods:["Early Chalukya"], img:null},
+      aihole:{title:{en:"Aihole — Cradle of temple architecture",kn:"ಐಹೊಳೆ — ದೇಗುಲ ವಾಸ್ತುಶಿಲ್ಪದ ತೊಟ್ಟಿಲು"},cat:"Proposed",intro:{en:"An experimental lab of early forms.",kn:"ಆದಿ ರೂಪಗಳ ಪ್ರಯೋಗಾಲಯ."},wow:{en:"100+ temples in a compact landscape.",kn:"ಒಂದು ಸಂಕೀರ್ಣ ಪ್ರದೇಶದಲ್ಲೇ 100+ ದೇವಾಲಯಗಳು."}, emoji:"🏺", ll:[16.018,75.883], periods:["Early Chalukya"], img:null},
+      bidar:{title:{en:"Bidar — Forts, fountains & Sufi routes",kn:"ಬೀದರ್ — ಕೋಟೆ, ಕಾರೇಜ್ ಮತ್ತು ಸೂಫಿ ಮಾರ್ಗಗಳು"},cat:"Proposed/Six",intro:{en:"Deccan’s Persianate capital with living crafts.",kn:"ಪರ್ಷಿಯನ್ ಪರಂಪರೆ ಹೊಂದಿದ ದಕ್ಷಿಣದ ರಾಜಧಾನಿ — ಜೀವಂತ ಹಸ್ತಕಲೆಗಳು."},wow:{en:"Ingenious karez aqueduct & world‑famous Bidriware.",kn:"ಅದ್ಭುತ ಕಾರೇಜ್ ಜಲವ್ಯವಸ್ಥೆ ಮತ್ತು ವಿಶ್ವ ಪ್ರಸಿದ್ಧ ಬೀದ್ರಿವೇರ್."}, emoji:"🕌", ll:[17.913,77.529], periods:["Bahmani/Adil Shahi"], img:null},
+
+      banavasi:{title:{en:"Banavasi — Karnataka’s oldest capital",kn:"ಬನವಾಸಿ — ಕರ್ನಾಟಕದ ಅತಿ ಹಳೆಯ ರಾಜಧಾನಿ"},cat:"Six",intro:{en:"Kadamba legacy, theatre traditions & inscriptions.",kn:"ಕದಂಬ ಪರಂಪರೆ, ರಂಗ ಪರಂಪರೆ ಮತ್ತು ಶಾಸನಗಳು."},wow:{en:"Coins of Vasu Deva; celebrated in classical literature.",kn:"ವಸು ದೇವನ ನಾಣ್ಯಗಳು; ಶಾಸ್ತ್ರೀಯ ಸಾಹಿತ್ಯದಲ್ಲಿ ಪ್ರಸಿದ್ಧ."}, emoji:"📜", ll:[14.615,74.85], periods:["Kadamba/Ancient"], img:null},
+      mirjan:{title:{en:"Mirjan Fort — Pepper & the queen’s bastion",kn:"ಮಿರ್ಜನ್ ಕೋಟೆ — ಮೆಣಸಿನ ಮಾರ್ಗ ಮತ್ತು ರಾಣಿಯ ಗೋಡೆಯಲ್ಲಿ"},cat:"Six",intro:{en:"Laterite ramparts tied to the spice trade.",kn:"ಮಸಾಲೆ ವ್ಯಾಪಾರದೊಂದಿಗೆ ಸಂಬಂಧ ಹೊಂದಿದ ಲ್ಯಾಟರೈಟ್ ಗೋಡೆಗಳು."},wow:{en:"Legends of Rani Chennabhairadevi & secret passages.",kn:"ರಾಣಿ ಚೆನ್ನಭೈರ ದೇವಿಯ ಕತೆಗಳು ಮತ್ತು ಗುಪ್ತ ದಾರಿಗಳು."}, emoji:"🧭", ll:[14.498,74.423], periods:["Medieval/Maritime"], img:null},
+      balligave:{title:{en:"Balligave — Artisans & inscriptions",kn:"ಬಳ್ಳಿಗಾವೇ — ಶಿಲ್ಪಿಗಳು ಮತ್ತು ಶಾಸನಗಳು"},cat:"Six",intro:{en:"Guilds and early medieval workshops.",kn:"ಗುಿಲ್ಡುಗಳು ಮತ್ತು ಮಧ್ಯಕಾಲೀನ ಕಾರ್ಯಾಗಾರಗಳು."},wow:{en:"Inscriptional hub noted for craft and learning.",kn:"ಕಲಾ ಮತ್ತು ಅಧ್ಯಯನಕ್ಕೆ ಖ್ಯಾತ ಶಾಸನ ಕೇಂದ್ರ."}, emoji:"🔧", ll:[14.238,75.348], periods:["Western Chalukya"], img:null},
+      brahmagiri:{title:{en:"Brahmagiri — From megaliths to Ashoka",kn:"ಬ್ರಹ್ಮಗಿರಿ — ಮಹಾಶಿಲೆಯಿಂದ ಅಶೋಕನ ತನಕ"},cat:"Six",intro:{en:"Prehistory meets Mauryan edicts.",kn:"ಪೂರ್ವೈತಿಹಾಸಿಕ ಕಾಲ ಮತ್ತು ಮೌರ್ಯ ಶಾಸನಗಳ ಸಂಗಮ."},wow:{en:"Megalithic burials & Ashokan inscription in one landscape.",kn:"ಒಂದೇ ಪ್ರದೇಶದಲ್ಲಿ ಮಹಾಶಿಲ ಸಮಾಧಿಗಳು ಮತ್ತು ಅಶೋಕ ಶಾಸನ."}, emoji:"⛰️", ll:[14.6,76.4], periods:["Prehistory/Mauryan"], img:null},
+      kurudumale:{title:{en:"Kurudumale — Monolithic Ganesha",kn:"ಕುರುದುಮಲೇ — ಏಕಶಿಲ ಗಣೇಶ"},cat:"Six",intro:{en:"Open‑field shrine linked to master sculptors.",kn:"ಮಹಾನ್ ಶಿಲ್ಪಿಗಳೊಡನೆ ಸಂಬಂಧಿಸಿದ ಮುಕ್ತ ಕ್ಷೇತ್ರದ ದೇವಾಲಯ."},wow:{en:"Colossal single‑stone Ganesha; Jakkanachari lore.",kn:"ಗಗನಚುಂಬಿ ಏಕಶಿಲ ಗಣೇಶ — ಜಕ್ಕಣಾಚಾರ್ಯ ಕತೆ."}, emoji:"🐘", ll:[13.164,78.381], periods:["Vijayanagara"], img:null}
+    };
+
+    const periods = ["Prehistory/Mauryan","Kadamba/Ancient","Early Chalukya","Western Chalukya","Hoysala","Vijayanagara","Bahmani/Adil Shahi","Medieval/Maritime","Natural"];
+
+    let LANG = 'en';
+    const $ = (q)=>document.querySelector(q);
+
+    function setLang(lang){
+      LANG = lang;
+      const t = i18n[LANG];
+      $('#brandText').textContent = t.brand; $('#brandSmall').textContent = t.demo;
+      $('#kicker').textContent = t.kicker; $('#headline').textContent = t.headline; $('#sub').textContent = t.sub;
+      $('#navExplore').textContent = t.explore; $('#navVision').textContent = t.vision; $('#ctaStart').textContent = t.start; $('#ctaWhy').textContent = t.why;
+      $('#gatewayTitle').textContent = t.gatewayTitle; $('#gatewayHint').textContent = t.gatewayHint;
+      $('#unescoH').textContent = t.unescoH; $('#unescoP').textContent = t.unescoP;
+      $('#propH').textContent = t.propH; $('#propP').textContent = t.propP;
+      $('#sixH').textContent = t.sixH; $('#sixP').textContent = t.sixP;
+      $('#visionH').textContent = t.visionH; $('#visionP').textContent = t.visionP;
+      $('#btnClose').textContent = t.close; $('#deepLink').textContent = t.open; $('#addCircuit').textContent = t.add;
+    }
+
+    const tWrap = document.getElementById('timeline');
+    periods.forEach(p=>{
+      const b = document.createElement('button');
+      b.className = 'tick'; b.textContent = p; b.onclick = ()=>filterByPeriod(p,b);
+      tWrap.appendChild(b);
+    });
+
+    function filterByPeriod(p, btn){
+      document.querySelectorAll('.tick').forEach(n=>n.classList.remove('active')); btn.classList.add('active');
+      document.querySelectorAll('.chip').forEach(ch=>{
+        const s = sites[ch.dataset.key];
+        ch.style.opacity = s && s.periods.includes(p) ? '1' : '.35';
+      });
+    }
+
+    const map = L.map('map', {zoomControl:true}).setView([14.5, 75.5], 6.6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OSM' }).addTo(map);
+
+    function addMarker(k, s){
+      const m = L.marker(s.ll).addTo(map);
+      m.on('click', ()=> openSite(k));
+      m.bindTooltip(s.title[LANG] || s.title.en);
+    }
+    Object.entries(sites).forEach(([k,s])=> addMarker(k,s));
+
+    const modal = document.getElementById('siteModal');
+    const media = document.getElementById('modalMedia');
+    const cat = document.getElementById('modalCategory');
+    const title = document.getElementById('modalTitle');
+    const intro = document.getElementById('modalIntro');
+    const wow = document.getElementById('modalWow');
+    const addBtn = document.getElementById('addCircuit');
+    const deep = document.getElementById('deepLink');
+
+    let circuit = [];
+
+    function baseOpenSite(key){
+      const s = sites[key];
+      media.textContent = s.emoji || '🗺️';
+      cat.textContent = s.cat;
+      title.textContent = s.title[LANG] || s.title.en;
+      intro.textContent = s.intro[LANG] || s.intro.en;
+      wow.textContent = (LANG==='kn'?'ವಾವು: ':'Wow: ') + (s.wow[LANG] || s.wow.en);
+      addBtn.onclick = () => { if(!circuit.includes(key)){ circuit.push(key); addBtn.textContent = (LANG==='kn'?'ಸೇರಿಸಲಾಗಿದೆ ✓ ':'Added ✓ ') + '('+circuit.length+')'; } };
+      addBtn.textContent = i18n[LANG].add;
+      const url = location.origin + location.pathname + '#site=' + key + '&lang=' + LANG;
+      deep.href = url;
+      const qr = new QRious({ element: document.getElementById('qr'), value: url, size: 140, background: '#0b1536', foreground: '#bfe7ff' });
+      modal.showModal();
+    }
+
+    function openSite(key){
+      const s = sites[key];
+      const img = document.getElementById('modalImg');
+      if(s.img){ img.src = s.img; img.style.display='block'; media.textContent=''; }
+      else { img.removeAttribute('src'); img.style.display='none'; media.textContent = s.emoji || '🗺️'; }
+      baseOpenSite(key);
+      circuitBadge.textContent = circuit.length;
+    }
+
+    document.querySelectorAll('.chip').forEach(ch=>{
+      ch.addEventListener('click', e => openSite(e.currentTarget.dataset.key));
+    });
+
+    siteModal.addEventListener('click', (e)=>{ const r = siteModal.getBoundingClientRect(); if(!(e.clientX>r.left && e.clientX<r.right && e.clientY>r.top && e.clientY<r.bottom)) siteModal.close(); });
+
+    function handleHash(){
+      const h = new URLSearchParams(location.hash.replace('#','?'));
+      const k = h.get('site'); const lg = h.get('lang');
+      if(lg && (lg==='en'||lg==='kn')) setLang(lg);
+      if(k && sites[k]) openSite(k);
+    }
+    window.addEventListener('hashchange', handleHash);
+
+    document.getElementById('langToggle').addEventListener('click', ()=> setLang(LANG==='en'?'kn':'en'));
+
+    // Itinerary
+    const circuitBadge = document.getElementById('circuitCount');
+    const planBtn = document.getElementById('viewItinerary');
+    const clearBtn = document.getElementById('clearItinerary');
+    const planList = document.getElementById('planList');
+    const distWrap = document.getElementById('distWrap');
+    let selectedIndex = 0;
+
+    function refreshPlan(){
+      planList.innerHTML = '';
+      circuit.forEach((k,i)=>{
+        const li = document.createElement('li');
+        li.textContent = (sites[k].title[LANG]||sites[k].title.en);
+        li.dataset.key = k; li.tabIndex = 0;
+        if(i===selectedIndex) li.style.outline = '2px solid var(--ring)';
+        planList.appendChild(li);
+      });
+      circuitBadge.textContent = circuit.length;
+      refreshDistances();
+    }
+
+    function haversine(a,b){
+      const toRad = d=>d*Math.PI/180; const R=6371;
+      const [lat1,lon1]=a,[lat2,lon2]=b; const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+      const s1=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      return 2*R*Math.asin(Math.sqrt(s1));
+    }
+
+    function refreshDistances(){
+      if(circuit.length<2){distWrap.textContent = LANG==='kn'?'ಮಾರ್ಗದ ದೂರ ಲಭ್ಯವಿಲ್ಲ':'Add 2+ sites to estimate distance.'; return;}
+      let total=0; let html='';
+      for(let i=0;i<circuit.length-1;i++){
+        const a=sites[circuit[i]].ll, b=sites[circuit[i+1]].ll;
+        const d=haversine(a,b); total+=d; html += `${i+1}. ${sites[circuit[i]].title[LANG]||sites[circuit[i]].title.en} → ${sites[circuit[i+1]].title[LANG]||sites[circuit[i+1]].title.en}: ${d.toFixed(1)} km<br/>`;
+      }
+      html += `<b>${LANG==='kn'?'ಒಟ್ಟು':'Total'}: ${total.toFixed(1)} km</b>`;
+      distWrap.innerHTML = html;
+    }
+
+    planBtn.addEventListener('click', ()=>{ selectedIndex = 0; refreshPlan(); planModal.showModal(); });
+    clearBtn.addEventListener('click', ()=>{ circuit.length = 0; refreshPlan(); });
+
+    document.getElementById('planClear').addEventListener('click', ()=>{ circuit.length=0; refreshPlan(); });
+    document.getElementById('planUp').addEventListener('click', ()=>{ if(selectedIndex>0){ const t=circuit[selectedIndex-1]; circuit[selectedIndex-1]=circuit[selectedIndex]; circuit[selectedIndex]=t; selectedIndex--; refreshPlan(); }});
+    document.getElementById('planDown').addEventListener('click', ()=>{ if(selectedIndex<circuit.length-1){ const t=circuit[selectedIndex+1]; circuit[selectedIndex+1]=circuit[selectedIndex]; circuit[selectedIndex]=t; selectedIndex++; refreshPlan(); }});
+    document.getElementById('planRemove').addEventListener('click', ()=>{ if(circuit.length){ circuit.splice(selectedIndex,1); if(selectedIndex>=circuit.length) selectedIndex=Math.max(0,circuit.length-1); refreshPlan(); }});
+
+    planList.addEventListener('click', (e)=>{
+      if(e.target.tagName==='LI'){ selectedIndex = Array.from(planList.children).indexOf(e.target); refreshPlan(); }
+    });
+
+    document.getElementById('exportJSON').addEventListener('click', ()=>{
+      const data = circuit.map(k=>({ key:k, title: sites[k].title[LANG]||sites[k].title.en, ll: sites[k].ll }));
+      const blob = new Blob([JSON.stringify({lang:LANG, circuit:data}, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'karnataka_itinerary.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('printPlan').addEventListener('click', ()=> window.print());
+
+    setLang('en');
+    handleHash();
+  </script>
+</body>
+</html>
