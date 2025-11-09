@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head> <!-- Leaflet.markercluster (for clustered markers) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>From Stone to Story — Karnataka’s Living Heritage (Demo+)</title>
-  <!-- Leaflet map -->
+  <title>From Stone to Story — Karnataka’s Living Heritage (Demo+)</title><!-- Leaflet map -->
+  <!-- after map init -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- QR code helper -->
@@ -281,6 +284,30 @@
     }
 
     const map = L.map('map', {zoomControl:true}).setView([14.5, 75.5], 6.6);
+    <script>
+// ===== CLUSTER + MARKERS =====
+const markers = {}; // key -> marker
+const cluster = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom: true,
+  disableClusteringAtZoom: 9
+});
+map.addLayer(cluster);
+
+function getPrimaryCat(s){ return (s.cat || '').toLowerCase().split('/')[0]; }
+
+function addMarker(k, s){
+  const m = L.marker(s.ll);
+  m.on('click', ()=> openSite(k));
+  m.bindTooltip(s.title[LANG] || s.title.en);
+  markers[k] = m;
+  cluster.addLayer(m);
+}
+
+// (re)populate markers initially
+cluster.clearLayers();
+Object.entries(sites).forEach(([k,s])=> addMarker(k,s));
+</script>
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OSM' }).addTo(map);
 
     function addMarker(k, s){
