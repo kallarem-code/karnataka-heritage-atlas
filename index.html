@@ -99,6 +99,26 @@
   </header>
 
   <main class="container">
+    <!-- Filter Sidebar (fixed) -->
+<aside id="filters" class="card" style="position:fixed;left:20px;top:96px;z-index:25;max-width:280px; background:linear-gradient(180deg, #16214a 0%, #10183a 100%);border:1px solid #2a3766;border-radius:16px;padding:14px;box-shadow:0 12px 30px rgba(10,20,45,.25)">
+  <h3 style="margin:.2rem 0;font-size:1.05rem">Filters</h3>
+
+  <div class="tiny" style="margin-top:6px">Category</div>
+  <div class="chiprow" style="margin-top:6px">
+    <button class="chip" data-filter-cat="unesco">UNESCO</button>
+    <button class="chip" data-filter-cat="proposed">Proposed</button>
+    <button class="chip" data-filter-cat="six">Six Sites</button>
+  </div>
+
+  <div class="tiny" style="margin-top:10px">Era</div>
+  <div id="eraChips" class="chiprow" style="margin-top:6px"></div>
+
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <input id="q" placeholder="Search sites…" style="flex:1;padding:.5rem;border-radius:10px;border:1px solid #2a3766;background:#0e1736;color:#fff"/>
+    <button id="clearAll" class="btn">Clear</button>
+  </div>
+</aside>
+
     <section class="hero" id="top">
       <div class="stars"></div>
       <div class="shoot"></div>
