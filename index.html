@@ -327,7 +327,6 @@ function addMarker(k, s){
   const m = L.marker(s.ll);
   m.on('click', ()=> openSite(k));
   m.bindTooltip(s.title[LANG] || s.title.en);
-  <script>
 // ===== FILTERS + SEARCH =====
 const filterState = { cat: new Set(), eras: new Set(), q: '' };
 
@@ -443,7 +442,6 @@ async function playTour(id){
     await sleep(step.delay);
   }
 }
-
   // Helper: does a site pass current filters?
 function passes(s){
   const catOK = !filterState.cat.size || filterState.cat.has(getPrimaryCat(s));
@@ -487,7 +485,6 @@ function applyFilters(){
   if(q){ filterState.q = q.toLowerCase(); const iq=document.getElementById('q'); iq.value = q; }
   applyFilters();
 })();
-
   // ===== AUTOPLAY TOUR =====
 const tours = {
   unesco: [
