@@ -1,0 +1,21 @@
+{
+  "name": "karnataka-heritage-navigator",
+  "version": "1.0.0",
+  "description": "3D Heritage Atlas for Karnataka - UNESCO and Heritage Sites Explorer",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "gsap": "^3.12.2",
+    "animejs": "^3.2.2",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "vite": "^5.0.8"
+  }
+}
+
