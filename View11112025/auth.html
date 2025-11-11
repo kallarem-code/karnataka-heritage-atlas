@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karnataka Heritage - Authentication</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(78, 205, 196, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100vh) translateX(50px);
+                opacity: 0;
+            }
+        }
+
+        .auth-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 4px 20px rgba(78, 205, 196, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 20px rgba(78, 205, 196, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 6px 30px rgba(78, 205, 196, 0.6);
+            }
+        }
+
+        .auth-title {
+            color: #fff;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .auth-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #4ecdc4;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        .btn-auth::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-auth:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .error-message {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.4);
+            color: #ff6b6b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-particles" id="particles"></div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">🏛️</div>
+                <h1 class="auth-title">From Stone to Story<br />Karnataka's Living Heritage</h1>
+                <p class="auth-subtitle">Enter passcode to continue</p>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                Invalid passcode. Please try again.
+            </div>
+
+            <form id="authForm">
+                <div class="form-group">
+                    <label class="form-label" for="passcode">Passcode</label>
+                    <input 
+                        type="password" 
+                        class="form-control" 
+                        id="passcode" 
+                        placeholder="Enter your passcode"
+                        autocomplete="off"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <button type="submit" class="btn-auth" id="submitBtn">
+                    <span class="btn-text">Access Heritage Portal</span>
+                    <span class="loading">⏳</span>
+                </button>
+            </form>
+
+            <p class="footer-text">
+                Protected Access • Karnataka Heritage Portal
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Create animated particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 4 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.bottom = '-10px';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Initialize particles
+        createParticles();
+
+        // Passcode (change this to your desired passcode)
+        const CORRECT_PASSCODE = 'admin123';
+
+        // Form submission
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const passcodeInput = document.getElementById('passcode');
+            const errorMessage = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const loading = submitBtn.querySelector('.loading');
+            
+            const enteredPasscode = passcodeInput.value.trim();
+            
+            // Hide error message
+            errorMessage.classList.remove('show');
+            
+            // Show loading
+            btnText.style.display = 'none';
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+            
+            // Simulate authentication delay
+            setTimeout(() => {
+                if (enteredPasscode === CORRECT_PASSCODE) {
+                    // Store authentication in sessionStorage
+                    sessionStorage.setItem('karnataka_heritage_authenticated', 'true');
+                    sessionStorage.setItem('karnataka_heritage_auth_time', Date.now().toString());
+                    
+                    // Success animation
+                    submitBtn.style.background = 'linear-gradient(135deg, #44a08d, #4ecdc4)';
+                    
+                    // Redirect to landing page
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 500);
+                } else {
+                    // Show error
+                    errorMessage.classList.add('show');
+                    passcodeInput.value = '';
+                    passcodeInput.focus();
+                    
+                    // Reset button
+                    btnText.style.display = 'inline';
+                    loading.classList.remove('show');
+                    submitBtn.disabled = false;
+                    
+                    // Shake animation
+                    document.querySelector('.auth-card').style.animation = 'none';
+                    setTimeout(() => {
+                        document.querySelector('.auth-card').style.animation = 'shake 0.5s';
+                    }, 10);
+                }
+            }, 800);
+        });
+
+        // Check if already authenticated
+        if (sessionStorage.getItem('karnataka_heritage_authenticated') === 'true') {
+            // Check if session is still valid (24 hours)
+            const authTime = parseInt(sessionStorage.getItem('karnataka_heritage_auth_time') || '0');
+            const now = Date.now();
+            const hoursSinceAuth = (now - authTime) / (1000 * 60 * 60);
+            
+            if (hoursSinceAuth < 24) {
+                // Already authenticated, redirect
+                window.location.href = 'index.html';
+            } else {
+                // Session expired
+                sessionStorage.removeItem('karnataka_heritage_authenticated');
+                sessionStorage.removeItem('karnataka_heritage_auth_time');
+            }
+        }
+
+        // Enter key to submit
+        document.getElementById('passcode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('authForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
+

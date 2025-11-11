@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Stone to Story — Karnataka’s Living Heritage</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Authentication check
+        (function() {
+            const isAuthenticated = sessionStorage.getItem('karnataka_heritage_authenticated') === 'true';
+            const authTime = parseInt(sessionStorage.getItem('karnataka_heritage_auth_time') || '0');
+            const now = Date.now();
+            const hoursSinceAuth = (now - authTime) / (1000 * 60 * 60);
+            
+            // Check if session is valid (24 hours)
+            if (!isAuthenticated || hoursSinceAuth >= 24) {
+                // Clear expired session
+                sessionStorage.removeItem('karnataka_heritage_authenticated');
+                sessionStorage.removeItem('karnataka_heritage_auth_time');
+                // Redirect to auth page
+                window.location.href = 'auth.html';
+            }
+        })();
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+        <div class="container-fluid nav-container">
+            <!-- Brand Section -->
+            <a class="navbar-brand brand-section" href="#">
+                <div class="brand-icon">
+                    <svg class="karnataka-map-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Karnataka State Map Outline (simplified but recognizable) -->
+                        <path d="M 25 40 
+                                 L 35 35 
+                                 L 50 30 
+                                 L 70 28 
+                                 L 90 30 
+                                 L 110 35 
+                                 L 130 42 
+                                 L 150 50 
+                                 L 165 60 
+                                 L 175 75 
+                                 L 180 95 
+                                 L 178 115 
+                                 L 172 135 
+                                 L 160 150 
+                                 L 145 162 
+                                 L 125 170 
+                                 L 105 175 
+                                 L 85 178 
+                                 L 65 177 
+                                 L 45 172 
+                                 L 30 163 
+                                 L 20 150 
+                                 L 15 135 
+                                 L 12 115 
+                                 L 12 95 
+                                 L 15 75 
+                                 L 20 55 
+                                 L 25 40 Z" 
+                              fill="url(#karnatakaGradient)" 
+                              stroke="#4ecdc4" 
+                              stroke-width="2.5"
+                              stroke-linejoin="round"/>
+                        <!-- Western Ghats (mountain range on west coast) -->
+                        <path d="M 30 50 
+                                 Q 40 45 50 48 
+                                 Q 60 50 70 52 
+                                 Q 80 54 90 56 
+                                 Q 100 58 110 60 
+                                 Q 120 62 130 64" 
+                              stroke="#2dd4bf" 
+                              stroke-width="2.5" 
+                              fill="none" 
+                              stroke-linecap="round"
+                              opacity="0.8"/>
+                        <!-- Heritage site markers (representing major heritage locations) -->
+                        <circle cx="100" cy="100" r="4" fill="#ff6b6b" class="pulse-dot" style="animation-delay: 0s"/>
+                        <circle cx="120" cy="85" r="3.5" fill="#4ecdc4" class="pulse-dot" style="animation-delay: 0.3s"/>
+                        <circle cx="85" cy="115" r="3.5" fill="#ffe66d" class="pulse-dot" style="animation-delay: 0.6s"/>
+                        <circle cx="140" cy="110" r="3" fill="#95e1d3" class="pulse-dot" style="animation-delay: 0.9s"/>
+                        <defs>
+                            <linearGradient id="karnatakaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#4a7c59;stop-opacity:1" />
+                                <stop offset="30%" style="stop-color:#3d5a3d;stop-opacity:1" />
+                                <stop offset="70%" style="stop-color:#4a7c59;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#5a8c69;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">From Stone to Story</span>
+                    <span class="brand-subtitle">3D Navigator</span>
+                </div>
+            </a>
+            
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Action Buttons -->
+                <ul class="navbar-nav nav-actions">
+                    <li class="nav-item">
+                        <button class="nav-btn nav-btn-primary" id="toggleView" title="Toggle 3D/2D View">
+                            <span class="nav-btn-icon">🌐</span>
+                            <span class="nav-btn-text">3D View</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-btn nav-btn-secondary" id="resetCamera" title="Reset Camera Position">
+                            <span class="nav-btn-icon">↺</span>
+                            <span class="nav-btn-text">Reset</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-btn nav-btn-accent" id="autoTour" title="Auto Tour All Sites">
+                            <span class="nav-btn-icon">▶</span>
+                            <span class="nav-btn-text">Tour</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-btn nav-btn-success" id="toggleItinerary" title="Toggle Itinerary">
+                            <span class="nav-btn-icon">📋</span>
+                            <span class="nav-btn-text">Circuit</span>
+                            <span class="nav-badge" id="itineraryBadge">0</span>
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Search and Filters -->
+                <div class="nav-controls">
+                    <div class="search-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input class="search-input" type="search" id="searchInput" placeholder="Search heritage sites...">
+                        <button class="search-clear" id="clearSearch" style="display: none;">×</button>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <select class="filter-select" id="categoryFilter">
+                            <option value="all">📂 All Categories</option>
+                            <option value="UNESCO">🏆 UNESCO</option>
+                            <option value="Proposed UNESCO">⭐ Proposed UNESCO</option>
+                            <option value="Heritage">🏛️ Heritage</option>
+                            <option value="Prehistoric">🦕 Prehistoric</option>
+                        </select>
+                        
+                        <select class="filter-select" id="eraFilter">
+                            <option value="all">⏳ All Eras</option>
+                            <option value="Prehistoric">🦕 Prehistoric</option>
+                            <option value="Medieval">⚔️ Medieval</option>
+                            <option value="Empire">👑 Empire</option>
+                            <option value="Modern">🏢 Modern</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Stats Display -->
+                <div class="nav-stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="visibleSitesCount">8</span>
+                        <span class="stat-label">Sites</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Landing Page Hero -->
+    <div id="landingPage" class="landing-page">
+        <div class="landing-grid">
+            <div class="landing-main">
+                <div class="landing-hero">
+                    <h1 class="landing-title" id="landingTitle">What if Karnataka's ancient stones could speak?</h1>
+                    <p class="landing-subtitle" id="landingSubtitle">An interactive demo connecting UNESCO marvels, proposed nominations, and six timeless sites—from Banavasi to Bidar—into a single story-ready canvas.</p>
+                    <div class="karnataka-map-display">
+                        <img style="height: 286px;
+    width: auto;"src="KarnatakaMap.png" alt="Karnataka Map" class="karnataka-map-image">
+                    </div>
+                    <button class="btn btn-lg btn-primary landing-btn" id="startExploration">
+                        <span>Start Exploration</span>
+                    </button>
+                </div>
+
+                
+                <!-- <div class="col-12" id="canvasContainer">
+                <div id="threejs-container"></div>
+                <div id="loadingOverlay" class="loading-overlay">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-light mt-3">Loading Karnataka Heritage Navigator...</p>
+                </div>
+                 Scene Intro Overlay -->
+                <div id="sceneIntro" class="scene-intro">
+                    <h2 class="intro-title">Welcome to Karnataka</h2>
+                    <p class="intro-text">Discover 8+ heritage sites across the state</p>
+                </div>
+            </div> 
+                <!-- <section id="vision" class="landing-vision">
+                    <div class="section-head"><h2 id="visionH">Vision</h2></div>
+                    <p class="tiny" id="visionP">Scale this demo into a statewide digital atlas: immersive stories, QR-enabled trails, school-ready modules, and circuits that connect monuments with crafts, festivals, cuisine and communities.</p>
+                </section> -->
+
+                <!-- <footer class="landing-footer">
+                    © From Stone to Story • Demo. For presentation only. Replace with verified content during production.
+                </footer> -->
+            </div>
+
+            <!-- <aside class="landing-aside sticky">
+                <div id="landingMap" class="landing-map-container"></div>
+                <div style="margin-top:12px;display:grid;gap:8px">
+                    <button class="btn btn-primary" id="viewItinerary">View Itinerary (<span id="circuitCount">0</span>)</button>
+                    <button class="btn btn-secondary" id="clearItinerary">Clear Itinerary</button>
+                </div>
+            </aside> -->
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container-fluid p-0 main-container" id="mainContainer" style="margin-top: 56px; display: none;">
+        <div class="row g-0">
+            <!-- 3D Canvas Container -->
+             
+            <div class="col-12" id="canvasContainer">
+                <div id="threejs-container"></div>
+                <div id="loadingOverlay" class="loading-overlay">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-light mt-3">Loading Karnataka Heritage Navigator...</p>
+                </div>
+                <!-- Scene Intro Overlay -->
+                <div id="sceneIntro" class="scene-intro">
+                    <h2 class="intro-title">Welcome to Karnataka</h2>
+                    <p class="intro-text">Discover 8+ heritage sites across the state</p>
+                </div>
+            </div>
+            <section id="categories" class="landing-categories" style="display:none;background: rebeccapurple;
+            padding: 27px;">
+                <div class="section-head">
+                    <h2 id="gatewayTitle">Three Gateways · Multiple Touchpoints</h2>
+                    <span class="tiny" id="gatewayHint">Click a site chip to open details</span>
+                </div>
+
+                <div class="timeline" id="timeline">
+                    <button class="tick" data-era="Prehistory/Mauryan">Prehistory/Mauryan</button>
+                    <button class="tick" data-era="Kadamba/Ancient">Kadamba/Ancient</button>
+                    <button class="tick" data-era="Early Chalukya">Early Chalukya</button>
+                    <button class="tick" data-era="Western Chalukya">Western Chalukya</button>
+                    <button class="tick" data-era="Hoysala">Hoysala</button>
+                    <button class="tick" data-era="Vijayanagara">Vijayanagara</button>
+                    <button class="tick active" data-era="Bahmani/Adil Shahi">Bahmani/Adil Shahi</button>
+                    <button class="tick" data-era="Medieval/Maritime">Medieval/Maritime</button>
+                    <button class="tick" data-era="Natural">Natural</button>
+                </div>
+
+                <div class="cards" style="margin-top:14px">
+                    <article class="card">
+                        <h3 id="unescoH">UNESCO World Heritage</h3>
+                        <p class="tiny" id="unescoP">Global treasures that anchor Karnataka on the world map.</p>
+                        <div class="chiprow" id="unescoChips"></div>
+                    </article>
+
+                    <article class="card">
+                        <h3 id="propH">Proposed UNESCO Sites</h3>
+                        <p class="tiny" id="propP">Sites with compelling Outstanding Universal Value.</p>
+                        <div class="chiprow" id="proposedChips"></div>
+                    </article>
+
+                    <article class="card">
+                        <h3 id="sixH">Six Prehistoric &amp; Heritage Sites</h3>
+                        <p class="tiny" id="sixP">Living traditions beyond the textbook routes.</p>
+                        <div class="chiprow" id="heritageChips"></div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- 2D Map Container (Hidden by default) -->
+            <div class="col-12 d-none" id="mapContainer">
+                <div id="leaflet-map" style="height: calc(100vh - 56px);"></div>
+            </div>
+
+            <!-- Sidebar for Site Info -->
+            <div class="col-md-4 col-lg-3 position-fixed end-0 top-0 mt-5 pt-2 bg-dark text-light" 
+                 id="infoSidebar" style="height: calc(100vh - 56px); overflow-y: auto; transform: translateX(100%); transition: transform 0.3s;">
+                <div class="p-3">
+                    <button class="btn btn-sm btn-outline-light mb-3 ripple-btn" id="closeSidebar">✕ Close</button>
+                    <div id="siteInfo"></div>
+                </div>
+            </div>
+
+            <!-- Itinerary Sidebar -->
+            <div class="col-md-4 col-lg-3 position-fixed start-0 top-0 mt-5 pt-2 bg-dark text-light" 
+                 id="itinerarySidebar" style="height: calc(100vh - 56px); overflow-y: auto; transform: translateX(-100%); transition: transform 0.3s;">
+                <div class="p-3">
+                    <h5 class="mb-3">My Circuit</h5>
+                    <div class="d-flex gap-2 mb-2">
+                        <button class="btn btn-sm btn-outline-light ripple-btn flex-fill" id="clearCircuit">Clear All</button>
+                        <button class="btn btn-sm btn-outline-info ripple-btn flex-fill" id="sortGeography">Sort by Geography</button>
+                    </div>
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-sm btn-outline-success ripple-btn flex-fill" id="exportCircuit">Export JSON</button>
+                        <button class="btn btn-sm btn-outline-warning ripple-btn flex-fill" id="exportPDF">Export PDF</button>
+                    </div>
+                    <div id="itineraryStats" class="mb-3 p-2 bg-secondary rounded">
+                        <small>Total Distance: <span id="totalDistance">0</span> km</small><br>
+                        <small>Sites: <span id="siteCount">0</span></small>
+                    </div>
+                    <div id="itineraryList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Detail Modal -->
+    <div class="modal fade" id="siteModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content creative-modal">
+                <!-- Hero Header Section -->
+                <div class="modal-hero" id="modalHero">
+                    <div class="hero-overlay"></div>
+                    <button type="button" class="btn-close btn-close-white modal-close-btn" data-bs-dismiss="modal"></button>
+                    <div class="hero-content">
+                        <h2 class="hero-title" id="modalTitle">Site Details</h2>
+                        <div class="hero-badges" id="heroBadges"></div>
+                    </div>
+                </div>
+                
+                <!-- Main Content -->
+                <div class="modal-body creative-modal-body" id="modalBody">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+                
+                <!-- Action Footer -->
+                <div class="modal-footer creative-modal-footer">
+                    <div class="action-buttons">
+                        <button type="button" class="btn btn-action btn-close-action ripple-btn" data-bs-dismiss="modal">
+                            <span class="btn-icon">✕</span> Close
+                        </button>
+                        <button type="button" class="btn btn-action btn-video-action ripple-btn" id="watchVideo">
+                            <span class="btn-icon">▶</span> Watch Video
+                        </button>
+                        <button type="button" class="btn btn-action btn-circuit-action ripple-btn" id="addToCircuit">
+                            <span class="btn-icon">+</span> Add to Circuit
+                        </button>
+                        <button type="button" class="btn btn-action btn-focus-action ripple-btn" id="focusSite">
+                            <span class="btn-icon">🎯</span> Focus
+                        </button>
+                    </div>
+                    <div class="qr-section">
+                        <div id="qrCodeContainer" class="qr-container"></div>
+                        <p class="qr-label">Scan to share</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <!-- GSAP -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <!-- Anime.js -->
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Marker Cluster -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- Leaflet KML -->
+    <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+    <!-- JSZip for KMZ extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- toGeoJSON for KML parsing -->
+    <script src="https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script type="module" src="js/data.js"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
+
